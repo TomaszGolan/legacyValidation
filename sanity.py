@@ -8,6 +8,7 @@ def fillDAG (dag, jobsub, mctest_path, out):
   if isDone (out):
     msg.warning ("Standard mctest sanity checks log files found in " + out + " ... " + msg.BOLD + "skipping sanity:fillDAG\n")
     return
+  msg.info ("\tAdding mctest sanity checks jobs\n")
   # fill dag file with sanity check jobs in parallel mode
   print >>dag, "<parallel>"
   # loop over keys and generate proper command

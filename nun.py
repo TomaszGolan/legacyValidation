@@ -127,6 +127,7 @@ def fillDAG (tag, dag, jobsub, out):
   if isDone (tag, out):
     msg.warning ("Nucleons splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAG\n")
     return
+  msg.info ("\tAdding nucleon splines jobs\n")
   # fill dag file with xsec-nucleon jobs in parallel mode
   print >>dag, "<parallel>"
   # loop over keys and generate proper command

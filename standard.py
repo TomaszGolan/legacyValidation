@@ -125,6 +125,7 @@ def fillDAG (tag, dag, jobsub, xsec_a_path, out):
   if isDone (out):
     msg.warning ("Standard mctest root files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG\n")
     return
+  msg.info ("\tAdding standard mctest jobs\n")
   # fill dag file with gevgen jobs in parallel mode
   print >>dag, "<parallel>"
   # loop over keys and generate proper command
