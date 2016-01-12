@@ -32,6 +32,7 @@ def preparePaths (path):
   paths['events']  = path + "/events"
   paths['mctest']  = path + "/events/mctest"
   paths['reptest'] = path + "/events/repeatability"
+  paths['xsecval'] = path + "/events/xsec_validation"
   # reports
   paths['reports'] = path + "/reports"
   paths['sanity']  = path + "/reports/sanity_mctest"
@@ -62,12 +63,11 @@ if __name__ == "__main__":
            + args.run + " -p " + args.builds + "/" + buildName
   # fill dag files with jobs
   msg.info ("Adding jobs to dag file: " + dagFile + "\n")
-  nun.fillDAG (args.tag, dag, jobsub, paths['xsec_N'])                         # nucleon cross sections
-  nua.fillDAG (args.tag, dag, jobsub, paths['xsec_N'], paths['xsec_A'])        # nucleus cross sections
-  standard.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['mctest'])   # standard mctest jobs
-  sanity.fillDAG (dag, jobsub, paths['mctest'], paths['sanity'])               # sanity check for mctest jobs
-  reptest.fillDAGEv (args.tag, dag, jobsub, paths['xsec_A'], paths['reptest']) # generate samples for repeatability test
-  reptest.fillDAGTest (dag, jobsub, paths['reptest'], paths['replog'])         # do repeatability test
+  nun.fillDAG (args.tag, dag, jobsub, paths['xsec_N'])                       # nucleon cross sections
+  nua.fillDAG (args.tag, dag, jobsub, paths['xsec_N'], paths['xsec_A'])      # nucleus cross sections
+  standard.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['mctest']) # standard mctest jobs
+  sanity.fillDAG (dag, jobsub, paths['mctest'], paths['sanity'])             # sanity check for mctest jobs
+  reptest.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['reptest'], paths['replog']) # repeatability test
   # dag file done
   dag.close()
   # run DAG

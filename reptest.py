@@ -5,6 +5,10 @@ import re, os
 
 runs = ['100', '101', '102']
 
+def fillDAG (tag, dag, jobsub, xsec_a_path, outEv, outTest):
+  fillDAGEv (tag, dag, jobsub, xsec_a_path, outEv)
+  fillDAGTest (dag, jobsub, outEv, outTest)
+
 def fillDAGEv (tag, dag, jobsub, xsec_a_path, out):
   # check if job is done already
   if isDoneEv (out):

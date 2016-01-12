@@ -123,11 +123,15 @@ outXML = {'chm'           : 'pgxspl-chm.xml',
           'res_tau_nc'    : 'pgxspl-res_tau_nc.xml'}
 
 def fillDAG (tag, dag, jobsub, out):
+  fillDAGPart (tag, dag, jobsub, out)
+  fillDAGMerge (tag, dag, jobsub, out)
+
+def fillDAGPart (tag, dag, jobsub, out):
   # check if job is done already
-  if isDone (tag, out):
-    msg.warning ("Nucleons splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAG\n")
+  if isDonePart (out):
+    msg.warning ("Nucleons splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGPart\n")
     return
-  msg.info ("\tAdding nucleon splines jobs\n")
+  msg.info ("\tAdding nucleon splines (part) jobs\n")
   # fill dag file with xsec-nucleon jobs in parallel mode
   print >>dag, "<parallel>"
   # loop over keys and generate proper command
@@ -138,6 +142,13 @@ def fillDAG (tag, dag, jobsub, out):
     print >>dag, jobsub + " -o " + out + " -l " + outXML[key] + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
+  
+def fillDAGMerge (tag, dag, jobsub, out): 
+  # check if job is done already
+  if isDoneMerge (tag, out):
+    msg.warning ("Nucleons merged splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGMerge\n")
+    return
+  msg.info ("\tAdding nucleon splines (merge) jobs\n")
   # fill dag file with splines add and 2root jobs in serial mode
   print >>dag, "<serial>"
   # merge splines job
@@ -145,14 +156,20 @@ def fillDAG (tag, dag, jobsub, out):
   cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
   print >>dag, jobsub + " -i " + out + " -o " + out + " -l gspladd.log -c " + cmd
   # convert to root job
-  cmd = "gspl2root -p 12,-12,14,-14,16,-16 -t 1000010010,1000000010 -o xsec.root -f input/gxspl-vN-" + tag + ".xml"
+  cmd = "gspl2root -p 12,-12,14,-14,16,-16 -t 1000010010,1000000010 -o xsec-vN-" + tag + ".root " + \
+        "-f input/gxspl-vN-" + tag + ".xml"
   cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
   print >>dag, jobsub + " -i " + out + " -o " + out + " -l gspladd.log -c " + cmd
   # done
   print >>dag, "</serial>"
 
-def isDone (tag, path):
+def isDonePart (path):
   # check if given path contains all splines
   for spline in outXML.itervalues():
     if spline not in os.listdir (path): return False
+  return True
+    
+def isDoneMerge (tag, path):
+  if "gxspl-vN-" + tag + ".xml" not in os.listdir (path): return False
+  if "xsec-vN-" + tag + ".root" not in os.listdir (path): return False
   return True

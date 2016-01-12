@@ -121,11 +121,15 @@ generatorList = {
   '9204' : 'IMD'}
 
 def fillDAG (tag, dag, jobsub, xsec_a_path, out):
+  fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out)
+  fillDAG_GST (dag, jobsub, out)
+  
+def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
   # check if job is done already
-  if isDone (out):
-    msg.warning ("Standard mctest root files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG\n")
+  if isDoneGHEP (out):
+    msg.warning ("Standard mctest ghep files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GHEP\n")
     return
-  msg.info ("\tAdding standard mctest jobs\n")
+  msg.info ("\tAdding standard mctest (ghep) jobs\n")
   # fill dag file with gevgen jobs in parallel mode
   print >>dag, "<parallel>"
   # loop over keys and generate proper command
@@ -137,7 +141,14 @@ def fillDAG (tag, dag, jobsub, xsec_a_path, out):
     print >>dag, jobsub + " -i " + xsec_a_path + " -o " + out + " -l gevgen_" + key + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
-  # fill dag file with gntps jobs in parallel mode
+
+def fillDAG_GST (dag, jobsub, out):
+  # check if job is done already
+  if isDoneGST (out):
+    msg.warning ("Standard mctest gst files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GST\n")
+    return
+  msg.info ("\tAdding standard mctest (gst) jobs\n")
+  # fill dag file with gntpc jobs in parallel mode
   print >>dag, "<parallel>"
   # loop over keys and generate proper command
   for key in nuPDG.iterkeys():
@@ -147,9 +158,14 @@ def fillDAG (tag, dag, jobsub, xsec_a_path, out):
   # done
   print >>dag, "</parallel>"
 
-def isDone (path):
-  # check if given path contains all root files
+def isDoneGHEP (path):
+  # check if given path contains all ghep files
   for key in nuPDG.iterkeys():
     if "gntp." + key + ".ghep.root" not in os.listdir (path): return False
+  return True
+  
+def isDoneGST (path):
+  # check if given path contains all gst files
+  for key in nuPDG.iterkeys():
     if "gntp." + key + ".gst.root" not in os.listdir (path): return False
   return True
