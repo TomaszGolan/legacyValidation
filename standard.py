@@ -120,9 +120,10 @@ generatorList = {
   '9203' : 'IMD',
   '9204' : 'IMD'}
 
-def fillDAG (tag, dag, jobsub, xsec_a_path, out):
-  fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out)
-  fillDAG_GST (dag, jobsub, out)
+def fillDAG (tag, dag, jobsub, xsec_a_path, outEvent, outTest):
+  fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, outEvent)
+  fillDAG_GST (dag, jobsub, outEvent)
+  fillDAG_sanity (dag, jobsub, outEvent, outTest)
   
 def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
   # check if job is done already
@@ -158,6 +159,31 @@ def fillDAG_GST (dag, jobsub, out):
   # done
   print >>dag, "</parallel>"
 
+def fillDAG_sanity (dag, jobsub, mctest_path, out):
+  # check if job is done already
+  if isDoneSanity (out):
+    msg.warning ("Standard mctest sanity checks log files found in " + out + " ... " + msg.BOLD + \
+                 "skipping standard:fillDAG_sanity\n")
+    return
+  msg.info ("\tAdding mctest sanity checks jobs\n")
+  # fill dag file with sanity check jobs in parallel mode
+  print >>dag, "<parallel>"
+  # loop over keys and generate proper command
+  for key in nuPDG.iterkeys():
+    cmd = "gvld_sample_scan -f input/gntp." + key + ".ghep.root -o gntp." + key + ".ghep.root.sanity.log " + \
+          "--add-event-printout-in-error-log --event-record-print-level 2 --max-num-of-errors-shown 10 " + \
+          "--check-energy-momentum-conservation " + \
+          "--check-charge-conservation " + \
+          "--check-for-pseudoparticles-in-final-state " + \
+          "--check-for-off-mass-shell-particles-in-final-state " + \
+          "--check-for-num-of-final-state-nucleons-inconsistent-with-target " + \
+          "--check-vertex-distribution " + \
+          "--check-decayer-consistency"
+    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
+    print >>dag, jobsub + " -i " + mctest_path + " -o " + out + " -l gvld_sample_scan." + key + ".log -c " + cmd
+  # done
+  print >>dag, "</parallel>"
+
 def isDoneGHEP (path):
   # check if given path contains all ghep files
   for key in nuPDG.iterkeys():
@@ -168,4 +194,10 @@ def isDoneGST (path):
   # check if given path contains all gst files
   for key in nuPDG.iterkeys():
     if "gntp." + key + ".gst.root" not in os.listdir (path): return False
+  return True
+
+def isDoneSanity (path):
+  # check if given path contains all log files
+  for key in nuPDG.iterkeys():
+    if "gntp." + key + ".ghep.root.sanity.log" not in os.listdir (path): return False
   return True

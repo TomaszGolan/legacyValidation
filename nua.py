@@ -27,7 +27,7 @@ def fillDAGPart (tag, dag, jobsub, xsec_n_path, out):
   if isDonePart (tag, out):
     msg.warning ("Nucleus splines found in " + out + " ... " + msg.BOLD + "skipping nua:fillDAGPart\n")
     return
-  msg.info ("\tAdding nucleus splines jobs\n")
+  msg.info ("\tAdding nucleus splines (part) jobs\n")
   # fill dag file with xsec-nucleus jobs in parallel mode
   print >>dag, "<parallel>"
   # loop over targets and generate proper command
