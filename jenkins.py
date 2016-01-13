@@ -30,7 +30,7 @@ def getBuild (tag, date, path):
   buildName = "genie_" + tag + "_buildmaster_" + date
   # check if build aready exists
   if os.path.isdir (path + "/" + buildName):
-    msg.warning (path + "/" + buildName + " already exists ... " + msg.BOLD + "skipping jenkins:getBuild\n")
+    msg.warning (path + "/" + buildName + " already exists ... " + msg.BOLD + "skipping jenkins:getBuild\n", 1)
     return buildName
   # no build
   tarball = buildName + ".tgz"

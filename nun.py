@@ -129,7 +129,7 @@ def fillDAG (tag, dag, jobsub, out):
 def fillDAGPart (tag, dag, jobsub, out):
   # check if job is done already
   if isDonePart (out):
-    msg.warning ("Nucleons splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGPart\n")
+    msg.warning ("Nucleons splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGPart\n", 1)
     return
   msg.info ("\tAdding nucleon splines (part) jobs\n")
   # fill dag file with xsec-nucleon jobs in parallel mode
@@ -146,7 +146,7 @@ def fillDAGPart (tag, dag, jobsub, out):
 def fillDAGMerge (tag, dag, jobsub, out): 
   # check if job is done already
   if isDoneMerge (tag, out):
-    msg.warning ("Nucleons merged splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGMerge\n")
+    msg.warning ("Nucleons merged splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGMerge\n", 1)
     return
   msg.info ("\tAdding nucleon splines (merge) jobs\n")
   # fill dag file with splines add and 2root jobs in serial mode

@@ -23,14 +23,28 @@ energy = "0.1,120.0"
 generatorList = "Default"
 flux = "-f '1/x'"
 
-def fillDAG (tag, dag, jobsub, xsec_a_path, outEvent, outRep):
+comparisons = ["numuCC_all", "numubarCC_all", "numuCC_lowE", "numubarCC_lowE", "numuCC_highE", "numubarCC_highE", 
+               "numuCC_minos", "numubarCC_minos", "numuCC_sciboone", "r_minos", "numuCCQE_all", "numuCCQE_deuterium", 
+               "numuCCQE_heavy_target", "numuCCQE_nomad_nucleon", "numuCCQE_nomad_nuclear", 
+               "numuCCQE_miniboone_nuclear", "numuCCQE_all_12C_nuclear", "numubarCCQE_all", "numubarCCQE_deuterium", 
+               "numubarCCQE_heavy_target", "numubarCCQE_nomad_nucleon", "numubarCCQE_nomad_nuclear", "numuCCppip", 
+               "numuCCnpip", "numuCCppi0", "numuCCn2pip",  "numuCCppippi0",  "numuCCppippim", "numuCCpi0_numuCCQE_k2k", 
+               "numuNCcohpi0_Ne20", "numuCCcohpip_Ne20", "numubarCCcohpim_Ne20", "numuNCcohpi0_Al27",
+               "numuNCcohpi0_Si30", "numuCCcohpip_Si30", "numubarCCcohpim_Si30", "numuCC_dilepton_ratio_worldavg", 
+               "numubarCC_dilepton_ratio_worldavg", "numuCC_charm_ratio_worldavg", "numuCC_dilepton_cdhs", 
+               "numuCC_dilepton_nomad", "numuCC_dilepton_e744_e770", "numuCC_dilepton_e744", "numuCC_dilepton_fnal15ft",
+               "numuCC_dilepton_gargamelle"]
+
+def fillDAG (tag, date, dag, jobsub, genie_path, xsec_a_path, outEvent, outRep):
   fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, outEvent)
   fillDAG_GST (dag, jobsub, outEvent)
+  createFileList (tag, date, xsec_a_path, outEvent, outRep)
+  fillDAG_data (tag, date, dag, jobsub, outRep)
 
 def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
   # check if job is done already
   if isDoneGHEP (out):
-    msg.warning ("xsec validation ghep files found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_GHEP\n")
+    msg.warning ("xsec validation ghep files found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_GHEP\n", 1)
     return
   msg.info ("\tAdding xsec validation (ghep) jobs\n")
   # fill dag file with gevgen jobs in parallel mode
@@ -48,7 +62,7 @@ def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
 def fillDAG_GST (dag, jobsub, out):
   # check if job is done already
   if isDoneGST (out):
-    msg.warning ("xsec validation gst files found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_GST\n")
+    msg.warning ("xsec validation gst files found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_GST\n", 1)
     return
   msg.info ("\tAdding xsec validation (gst) jobs\n")
   # fill dag file with gntpc jobs in parallel mode
@@ -61,6 +75,31 @@ def fillDAG_GST (dag, jobsub, out):
   # done
   print >>dag, "</parallel>"
 
+def fillDAG_data (tag, date, dag, jobsub, outRep):
+  # check if job is done already
+  if isDoneData (tag, date, outRep):
+    msg.warning ("xsec validation plots found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_data\n", 1)
+    return
+  msg.info ("\tAdding xsec validation (data) jobs\n")    
+  # single job to generate all GENIE/data comparisons
+  print >>dag, "<parallel>"
+  # one job for all without errors
+  cmd = "gvld_nu_xsec -g input/file_list-" + tag + "-" + date + ".xml " + \
+        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref; " + \
+        "ps2pdf14 genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref.ps"
+  cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
+  cmd = re.sub (';', "SCOLON", cmd) # temporary solution as workaround for jobsub quotes issue
+  print >>dag, jobsub + " -i " + outRep + " -o " + outRep + " -l gvld_nu_xsec_all.log -c " + cmd
+  # job per comparison with error
+  for comp in comparisons:
+    cmd = "gvld_nu_xsec -g input/file_list-" + tag + "-" + date + ".xml " + \
+        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + " -e -c " + comp + \
+        "ps2pdf14 genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + ".ps"
+    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
+    cmd = re.sub (';', "SCOLON", cmd) # temporary solution as workaround for jobsub quotes issue
+    print >>dag, jobsub + " -i " + outRep + " -o " + outRep + " -l gvld_nu_xsec_" + comp + ".log -c " + cmd
+  print >>dag, "</parallel>"
+  
 def isDoneGHEP (path):
   # check if given path contains all ghep files
   for key in nuPDG.iterkeys():
@@ -72,3 +111,31 @@ def isDoneGST (path):
   for key in nuPDG.iterkeys():
     if "gntp." + key + ".gst.root" not in os.listdir (path): return False
   return True
+  
+def isDoneData (tag, date, path):
+  # check if given path contains all plots
+  if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref.ps" not in os.listdir (path): return False
+  if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref.pdf" not in os.listdir (path): return False
+  for comp in comparisons:
+    if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + ".ps" not in os.listdir (path): return False
+    if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + ".pdf" not in os.listdir (path): return False
+  return True
+
+def createFileList (tag, date, xsec_a_path, outEvent, outRep):
+  # create xml file with the file list in the format as src/scripts/production/misc/make_genie_sim_file_list.pl
+  xmlFile = outRep + "/file_list-" + tag + "-" + date + ".xml"
+  try: os.remove (xmlFile)
+  except OSError: pass
+  xml = open (xmlFile, 'w');
+  print >>xml, '<?xml version="1.0" encoding="ISO-8859-1"?>'
+  print >>xml, '<genie_simulation_outputs>'
+  print >>xml, '\t<model name="' + tag + '-' + date + '">'
+  #~ for key in nuPDG.iterkeys():
+    #~ print >>xml, '\t\t<evt_file format="gst"> ' + outEvent + '/gntp.' + key + '.gst.root </evt_file>'
+  for key in nuPDG.iterkeys():
+    print >>xml, '\t\t<evt_file format="ghep"> ' + outEvent + '/gntp.' + key + '.ghep.root </evt_file>'
+  print >>xml, '\t\t<xsec_file> ' + xsec_a_path + '/xsec_vA-' + tag + '.root </xsec_file>'
+  print >>xml, '\t</model>'
+  print >>xml, '</genie_simulation_outputs>'
+  xml.close()
+

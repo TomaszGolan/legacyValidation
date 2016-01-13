@@ -128,7 +128,7 @@ def fillDAG (tag, dag, jobsub, xsec_a_path, outEvent, outTest):
 def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
   # check if job is done already
   if isDoneGHEP (out):
-    msg.warning ("Standard mctest ghep files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GHEP\n")
+    msg.warning ("Standard mctest ghep files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GHEP\n", 1)
     return
   msg.info ("\tAdding standard mctest (ghep) jobs\n")
   # fill dag file with gevgen jobs in parallel mode
@@ -146,7 +146,7 @@ def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
 def fillDAG_GST (dag, jobsub, out):
   # check if job is done already
   if isDoneGST (out):
-    msg.warning ("Standard mctest gst files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GST\n")
+    msg.warning ("Standard mctest gst files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GST\n", 1)
     return
   msg.info ("\tAdding standard mctest (gst) jobs\n")
   # fill dag file with gntpc jobs in parallel mode
@@ -163,7 +163,7 @@ def fillDAG_sanity (dag, jobsub, mctest_path, out):
   # check if job is done already
   if isDoneSanity (out):
     msg.warning ("Standard mctest sanity checks log files found in " + out + " ... " + msg.BOLD + \
-                 "skipping standard:fillDAG_sanity\n")
+                 "skipping standard:fillDAG_sanity\n", 1)
     return
   msg.info ("\tAdding mctest sanity checks jobs\n")
   # fill dag file with sanity check jobs in parallel mode
