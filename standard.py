@@ -1,4 +1,4 @@
-# fill dag with standard neutrino event generation jobs for GENIE release validation
+# fill dag with standard neutrino event generation jobs 
 
 import msg
 import re, os

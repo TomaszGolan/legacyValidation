@@ -2,7 +2,7 @@
 
 # GENIE Legacy Validation based on src/scripts/production/batch
 
-import parser, jenkins, msg, nun, nua, standard, sanity, reptest
+import parser, jenkins, msg, nun, nua, standard, reptest, xsecval
 import os, datetime, subprocess
 
 def initMessage (args):
@@ -34,9 +34,10 @@ def preparePaths (path):
   paths['reptest'] = path + "/events/repeatability"
   paths['xsecval'] = path + "/events/xsec_validation"
   # reports
-  paths['reports'] = path + "/reports"
-  paths['sanity']  = path + "/reports/sanity_mctest"
-  paths['replog']  = path + "/reports/repeatability_test"
+  paths['reports']  = path + "/reports"
+  paths['sanity']   = path + "/reports/sanity_mctest"
+  paths['replog']   = path + "/reports/repeatability_test"
+  paths['xseclog']  = path + "/reports/xsec_validation"
   # create all directiories
   for p in paths.values():
     if not os.path.exists (p): os.makedirs (p)
@@ -65,8 +66,9 @@ if __name__ == "__main__":
   msg.info ("Adding jobs to dag file: " + dagFile + "\n")
   nun.fillDAG (args.tag, dag, jobsub, paths['xsec_N'])                  # nucleon cross sections
   nua.fillDAG (args.tag, dag, jobsub, paths['xsec_N'], paths['xsec_A']) # nucleus cross sections
-  standard.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['mctest'], paths['sanity']) # standard mctest sanity
-  reptest.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['reptest'], paths['replog']) # repeatability test
+  standard.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['mctest'], paths['sanity'])  # standard mctest sanity
+  reptest.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['reptest'], paths['replog'])  # repeatability test
+  xsecval.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['xsecval'], paths['xseclog']) # xsec validation
   # dag file done
   dag.close()
   # run DAG

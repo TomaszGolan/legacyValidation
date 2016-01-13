@@ -1,4 +1,4 @@
-# run repeatability test
+# fill dag with repeatability test
 
 import msg, standard
 import re, os
