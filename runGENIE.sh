@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts p:o:i:l:c: OPT
+while getopts p:o:i:j:k:x:y:s:l:c:d: OPT
 do
   case ${OPT} in
     p) # path to genie top dir
@@ -10,13 +10,31 @@ do
       out=$OPTARG
       ;;
     i) # input files dir
-      input=$OPTARG
+      input1=$OPTARG
       ;;
+    j) # input files dir (only *.root)
+      input2=$OPTARG
+      ;;
+    k) # input files dir (only *.ghep.root)
+      input3=$OPTARG
+      ;;
+    x) # input files dir (only *.xml)
+      input4=$OPTARG
+      ;;
+    y) # input files dir (only *.ps)
+      input5=$OPTARG
+      ;;
+    s) # input single file
+      inputS=$OPTARG
+      ;;      
     l) # logfile name
       log=$OPTARG
       ;;
+    d) # print out to logfile
+      debug=$OPTARG
+      ;;
     c) # command to run
-      cmd=`echo $OPTARG | sed 's/SPACE/ /g'`
+      cmd=`echo $OPTARG | sed 's/SPACE/ /g' | sed "s/SQUOTE/'/g" | sed 's/SCOLON/;/g'` 
       ;;
   esac
 done
@@ -39,11 +57,28 @@ setup ifdhc
 
 ### load input (if defined) ###
 
-if [ -n "$input" ]; then ifdh cp -r $input input; fi
+mkdir input
+
+if [ -n "$input1" ]; then ifdh cp $input1/* input; fi
+if [ -n "$input2" ]; then ifdh cp $input2/*.root input; fi
+if [ -n "$input3" ]; then ifdh cp $input3/*.ghep.root input; fi
+if [ -n "$input4" ]; then ifdh cp $input4/*.xml input; fi
+if [ -n "$input5" ]; then ifdh cp $input5/*.ps input; fi
+if [ -n "$inputS" ]; then ifdh cp $inputS input; fi
 
 ### run the command ###
 
-$cmd 1>/dev/null 2>log
+if [ "$debug" == "true" ]
+then
+  echo "DEBUG MODE ON. ALL OUTPUT WILL BE COPIED TO LOG FILE"
+  echo "Command: "$cmd > $log
+  echo "Input folder: " >> $log
+  ls -lh input >> $log
+  echo "Running command" >> $log
+  $cmd >> $log
+else
+  $cmd 1>/dev/null 2>$log
+fi
 
 ### copy results to scratch
 
@@ -51,6 +86,9 @@ mkdir scratch
 mv *.root scratch
 mv *.xml scratch
 mv *.log scratch
+mv *.eps scratch
+mv *.ps scratch
+mv *.pdf scratch
 
 ### copy everything from scratch to output 
 
