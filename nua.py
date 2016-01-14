@@ -57,7 +57,7 @@ def fillDAGMerge (tag, dag, jobsub, out):
   cmd = "gspl2root -p " + nuPDG + " -t " + ",".join(targets) + " -o xsec-vA-" + tag + ".root " + \
         "-f input/gxspl-vA-" + tag + ".xml"
   cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -x " + out + " -o " + out + " -l gspladd.log -c " + cmd
+  print >>dag, jobsub + " -s " + out + "/gxspl-vA-" + tag + ".xml -o " + out + " -l gspladd.log -c " + cmd
   # done
   print >>dag, "</serial>"
 

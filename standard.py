@@ -180,7 +180,8 @@ def fillDAG_sanity (dag, jobsub, mctest_path, out):
           "--check-vertex-distribution " + \
           "--check-decayer-consistency"
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -k " + mctest_path + " -o " + out + " -l gvld_sample_scan." + key + ".log -c " + cmd
+    print >>dag, jobsub + " -s " + mctest_path + "/gntp." + key + ".ghep.root -o " + out + \
+                 " -l gvld_sample_scan." + key + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
 

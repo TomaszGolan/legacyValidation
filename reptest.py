@@ -23,7 +23,8 @@ def fillDAGEv (tag, dag, jobsub, xsec_a_path, out):
           " --cross-sections input/gxspl-vA-" + tag + ".xml"
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
     cmd = re.sub ("\'", "SQUOTE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -x " + xsec_a_path + " -o " + out + " -l gevgen_" + run + ".log -c " + cmd
+    print >>dag, jobsub + " -s " + xsec_a_path + "/gxspl-vA-" + tag + ".xml -o " + out + \
+                 " -l gevgen_" + run + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
   
