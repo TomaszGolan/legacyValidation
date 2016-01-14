@@ -13,6 +13,8 @@ def getArgs():
                        help = "DEDICATED,OPPORTUNISTIC [default] or DEDICATED,OPPORTUNISTIC,OFFSITE")
   parser.add_argument ("--group", action = "store", dest = "group", metavar = "[GROUP]", default = "genie",
                        help = "default = genie")
+  parser.add_argument ("--debug", action = "store", dest = "debug", metavar = "[false or true]", default = "false",
+                       help = "default = false")
 
   required = parser.add_argument_group ("required arguments")
   required.add_argument ("--genie_tag", action = "store", dest = "tag", metavar = "[GENIE VERSION]", required = True)

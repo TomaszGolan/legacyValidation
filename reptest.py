@@ -23,7 +23,7 @@ def fillDAGEv (tag, dag, jobsub, xsec_a_path, out):
           " --cross-sections input/gxspl-vA-" + tag + ".xml"
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
     cmd = re.sub ("\'", "SQUOTE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + xsec_a_path + " -o " + out + " -l gevgen_" + run + ".log -c " + cmd
+    print >>dag, jobsub + " -x " + xsec_a_path + " -o " + out + " -l gevgen_" + run + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
   
@@ -42,7 +42,7 @@ def fillDAGTest (dag, jobsub, events, out):
           " --add-event-printout-in-error-log --max-num-of-errors-shown 10 " + \
           " -o reptest_runs" + runs[0] + "vs" + run + ".log"
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + events + " -o " + out + \
+    print >>dag, jobsub + " -k " + events + " -o " + out + \
                           " -l gvld_repeatability_test_" + runs[0] + "vs" + run + ".log -c " + cmd
   # done  
   print >>dag, "</parallel>"

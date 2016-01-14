@@ -38,6 +38,7 @@ def preparePaths (path):
   paths['sanity']   = path + "/reports/sanity_mctest"
   paths['replog']   = path + "/reports/repeatability_test"
   paths['xseclog']  = path + "/reports/xsec_validation"
+  paths['xsecsng']  = path + "/reports/xsec_validation/single_comparisons_with_errors"
   # create all directiories
   for p in paths.values():
     if not os.path.exists (p): os.makedirs (p)
@@ -63,14 +64,15 @@ if __name__ == "__main__":
   dag = open (dagFile, 'w');
   # common jobsub command
   jobsub = "jobsub --OS=SL6 --resource-provides=usage_model=" + args.resource + " -G " + args.group + " file://" \
-           + args.run + " -p " + args.builds + "/" + buildName
+           + args.run + " -p " + args.builds + "/" + buildName + " -d " + args.debug
   # fill dag files with jobs
   msg.info ("Adding jobs to dag file: " + dagFile + "\n")
   nun.fillDAG (args.tag, dag, jobsub, paths['xsec_N'])                  # nucleon cross sections
   nua.fillDAG (args.tag, dag, jobsub, paths['xsec_N'], paths['xsec_A']) # nucleus cross sections
   standard.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['mctest'], paths['sanity'])  # standard mctest sanity
   reptest.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['reptest'], paths['replog'])  # repeatability test
-  xsecval.fillDAG (args.tag, args.build_date, dag, jobsub, args.builds + "/" + buildName, paths['xsec_A'], paths['xsecval'], paths['xseclog']) # xsec validation
+  xsecval.fillDAG (args.tag, args.build_date, dag, jobsub, args.builds + "/" + buildName, paths['xsec_A'], 
+                   paths['xsecval'], paths['xseclog'], paths['xsecsng']) # xsec validation
   # dag file done
   dag.close()
   msg.info ("Done with dag file. Ready to submit.\n")

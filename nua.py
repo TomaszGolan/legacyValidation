@@ -9,7 +9,9 @@ maxEnergy = "150"  # maximum energy for gmkspl
 nuPDG = "12,-12,14,-14" # pdg of neutrinos to process
 
 # targets to process
-targets = ['1000060120',  # C12
+targets = ['1000010010',  # H1
+           '1000000010',  # n
+           '1000060120',  # C12
            '1000080160',  # O16
            '1000100200',  # Ne20
            '1000130270',  # Al27
@@ -35,7 +37,7 @@ def fillDAGPart (tag, dag, jobsub, xsec_n_path, out):
     cmd = "gmkspl -p " + nuPDG + " -t " + t + " -n " + nKnots + " -e " + maxEnergy + \
           " --input-cross-sections input/gxspl-vN-" + tag + ".xml --output-cross-sections gxspl_" + t + ".xml"
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + xsec_n_path + " -o " + out + " -l gxspl_" + t + ".xml.log -c " + cmd
+    print >>dag, jobsub + " -x " + xsec_n_path + " -o " + out + " -l gxspl_" + t + ".xml.log -c " + cmd
   # done
   print >>dag, "</parallel>"
   
@@ -50,12 +52,12 @@ def fillDAGMerge (tag, dag, jobsub, out):
   # merge splines job
   cmd = "gspladd -d input -o gxspl-vA-" + tag + ".xml"  
   cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + " -o " + out + " -l gspladd.log -c " + cmd
+  print >>dag, jobsub + " -x " + out + " -o " + out + " -l gspladd.log -c " + cmd
   # convert to root job
-  cmd = "gspl2root -p " + nuPDG + " -t " + ", ".join(targets) + " -o xsec-vA-" + tag + ".root " + \
+  cmd = "gspl2root -p " + nuPDG + " -t " + ",".join(targets) + " -o xsec-vA-" + tag + ".root " + \
         "-f input/gxspl-vA-" + tag + ".xml"
   cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + " -o " + out + " -l gspladd.log -c " + cmd
+  print >>dag, jobsub + " -x " + out + " -o " + out + " -l gspladd.log -c " + cmd
   # done
   print >>dag, "</serial>"
 

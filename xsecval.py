@@ -35,11 +35,11 @@ comparisons = ["numuCC_all", "numubarCC_all", "numuCC_lowE", "numubarCC_lowE", "
                "numuCC_dilepton_nomad", "numuCC_dilepton_e744_e770", "numuCC_dilepton_e744", "numuCC_dilepton_fnal15ft",
                "numuCC_dilepton_gargamelle"]
 
-def fillDAG (tag, date, dag, jobsub, genie_path, xsec_a_path, outEvent, outRep):
+def fillDAG (tag, date, dag, jobsub, genie_path, xsec_a_path, outEvent, outRep, outRepPs):
   fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, outEvent)
   fillDAG_GST (dag, jobsub, outEvent)
   createFileList (tag, date, xsec_a_path, outEvent, outRep)
-  fillDAG_data (tag, date, dag, jobsub, outRep)
+  fillDAG_data (tag, date, dag, jobsub, xsec_a_path, outEvent, outRep, outRepPs)
 
 def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
   # check if job is done already
@@ -75,29 +75,27 @@ def fillDAG_GST (dag, jobsub, out):
   # done
   print >>dag, "</parallel>"
 
-def fillDAG_data (tag, date, dag, jobsub, outRep):
+def fillDAG_data (tag, date, dag, jobsub, xsec_a_path, outEvents, outRep, outRepPs):
   # check if job is done already
-  if isDoneData (tag, date, outRep):
-    msg.warning ("xsec validation plots found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_data\n", 1)
+  if isDoneData (tag, date, outRep, outRepPs):
+    msg.warning ("xsec validation plots found in " + outRep + " ... " + msg.BOLD + "skipping xsecval:fillDAG_data\n", 1)
     return
   msg.info ("\tAdding xsec validation (data) jobs\n")    
   # single job to generate all GENIE/data comparisons
   print >>dag, "<parallel>"
   # one job for all without errors
   cmd = "gvld_nu_xsec -g input/file_list-" + tag + "-" + date + ".xml " + \
-        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref; " + \
-        "ps2pdf14 genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref.ps"
-  cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  cmd = re.sub (';', "SCOLON", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + outRep + " -o " + outRep + " -l gvld_nu_xsec_all.log -c " + cmd
+        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref"
+  cmd = re.sub (' ', "SPACE", cmd)  # temporary solution as workaround for jobsub quotes issue
+  print >>dag, jobsub + " -x " + outRep + " -j " + xsec_a_path + " -k " + outEvents + " -o " + outRep + \
+               " -l gvld_nu_xsec_all.log -c " + cmd
   # job per comparison with error
   for comp in comparisons:
-    cmd = "gvld_nu_xsec -g input/file_list-" + tag + "-" + date + ".xml " + \
-        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + " -e -c " + comp + \
-        "ps2pdf14 genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + ".ps"
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    cmd = re.sub (';', "SCOLON", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + outRep + " -o " + outRep + " -l gvld_nu_xsec_" + comp + ".log -c " + cmd
+    cmd = "gvld_nu_xsec -e -g input/file_list-" + tag + "-" + date + ".xml " + \
+        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + " -c " + comp
+    cmd = re.sub (' ', "SPACE", cmd)  # temporary solution as workaround for jobsub quotes issue
+    print >>dag, jobsub + " -x " + outRep + " -j " + xsec_a_path + " -k " + outEvents + " -o " + outRepPs + \
+                 " -l gvld_nu_xsec_" + comp + ".log -c " + cmd
   print >>dag, "</parallel>"
   
 def isDoneGHEP (path):
@@ -112,15 +110,13 @@ def isDoneGST (path):
     if "gntp." + key + ".gst.root" not in os.listdir (path): return False
   return True
   
-def isDoneData (tag, date, path):
+def isDoneData (tag, date, path, path2):
   # check if given path contains all plots
   if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref.ps" not in os.listdir (path): return False
-  if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref.pdf" not in os.listdir (path): return False
   for comp in comparisons:
-    if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + ".ps" not in os.listdir (path): return False
-    if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + ".pdf" not in os.listdir (path): return False
+    if "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + ".ps" not in os.listdir (path2): return False
   return True
-
+  
 def createFileList (tag, date, xsec_a_path, outEvent, outRep):
   # create xml file with the file list in the format as src/scripts/production/misc/make_genie_sim_file_list.pl
   xmlFile = outRep + "/file_list-" + tag + "-" + date + ".xml"
@@ -130,12 +126,9 @@ def createFileList (tag, date, xsec_a_path, outEvent, outRep):
   print >>xml, '<?xml version="1.0" encoding="ISO-8859-1"?>'
   print >>xml, '<genie_simulation_outputs>'
   print >>xml, '\t<model name="' + tag + '-' + date + '">'
-  #~ for key in nuPDG.iterkeys():
-    #~ print >>xml, '\t\t<evt_file format="gst"> ' + outEvent + '/gntp.' + key + '.gst.root </evt_file>'
   for key in nuPDG.iterkeys():
-    print >>xml, '\t\t<evt_file format="ghep"> ' + outEvent + '/gntp.' + key + '.ghep.root </evt_file>'
-  print >>xml, '\t\t<xsec_file> ' + xsec_a_path + '/xsec_vA-' + tag + '.root </xsec_file>'
+    print >>xml, '\t\t<evt_file format="ghep"> input/gntp.' + key + '.ghep.root </evt_file>'
+  print >>xml, '\t\t<xsec_file> input/xsec-vA-' + tag + '.root </xsec_file>'
   print >>xml, '\t</model>'
   print >>xml, '</genie_simulation_outputs>'
   xml.close()
-

@@ -154,12 +154,12 @@ def fillDAGMerge (tag, dag, jobsub, out):
   # merge splines job
   cmd = "gspladd -d input -o gxspl-vN-" + tag + ".xml"  
   cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + " -o " + out + " -l gspladd.log -c " + cmd
+  print >>dag, jobsub + " -x " + out + " -o " + out + " -l gspladd.log -c " + cmd
   # convert to root job
   cmd = "gspl2root -p 12,-12,14,-14,16,-16 -t 1000010010,1000000010 -o xsec-vN-" + tag + ".root " + \
         "-f input/gxspl-vN-" + tag + ".xml"
   cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + " -o " + out + " -l gspladd.log -c " + cmd
+  print >>dag, jobsub + " -x " + out + " -o " + out + " -l gspladd.log -c " + cmd
   # done
   print >>dag, "</serial>"
 
