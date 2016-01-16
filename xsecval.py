@@ -1,7 +1,7 @@
 # fill dag with neutrino xsec validation jobs
 
 import msg
-import re, os
+import os
 
 nuPDG = {
   '1000' :  '14',
@@ -21,7 +21,7 @@ mcseed = "210921029"
 nEvents = "100000"
 energy = "0.1,120.0"  
 generatorList = "Default"
-flux = "-f '1/x'"
+flux = "'1/x'"
 
 comparisons = ["numuCC_all", "numubarCC_all", "numuCC_lowE", "numubarCC_lowE", "numuCC_highE", "numubarCC_highE", 
                "numuCC_minos", "numubarCC_minos", "numuCC_sciboone", "r_minos", "numuCCQE_all", "numuCCQE_deuterium", 
@@ -35,69 +35,76 @@ comparisons = ["numuCC_all", "numubarCC_all", "numuCC_lowE", "numubarCC_lowE", "
                "numuCC_dilepton_nomad", "numuCC_dilepton_e744_e770", "numuCC_dilepton_e744", "numuCC_dilepton_fnal15ft",
                "numuCC_dilepton_gargamelle"]
 
-def fillDAG (tag, date, dag, jobsub, genie_path, xsec_a_path, outEvent, outRep, outRepPs):
-  fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, outEvent)
-  fillDAG_GST (dag, jobsub, outEvent)
-  createFileList (tag, date, xsec_a_path, outEvent, outRep)
-  fillDAG_data (tag, date, dag, jobsub, xsec_a_path, outEvent, outRep, outRepPs)
+def fillDAG (jobsub, tag, date, paths, genie_path):
+  fillDAG_GHEP (jobsub, tag, paths['xsec_A'], paths['xsecval'])
+  fillDAG_GST (jobsub, paths['xsecval'])
+  createFileList (tag, date, paths['xsec_A'], paths['xsecval'], paths['xseclog'])
+  fillDAG_data (jobsub, tag, date, paths['xsec_A'], paths['xsecval'], paths['xseclog'], paths['xsecsng'])
 
-def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
+def fillDAG_GHEP (jobsub, tag, xsec_a_path, out):
   # check if job is done already
   if isDoneGHEP (out):
     msg.warning ("xsec validation ghep files found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_GHEP\n", 1)
     return
+  #not done, add jobs to dag
   msg.info ("\tAdding xsec validation (ghep) jobs\n")
-  # fill dag file with gevgen jobs in parallel mode
-  print >>dag, "<parallel>"
-  # loop over keys and generate proper command
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  # common configuration
+  inputFile = "gxspl-vA-" + tag + ".xml"
+  options   = " -n " + nEvents + " -e " + energy + " -f " + flux + " --seed " + mcseed + \
+              " --cross-sections input/" + inputFile + " --event-generator-list " + generatorList
+  # loop over keys and generate gevgen command
   for key in nuPDG.iterkeys():
-    cmd = "gevgen -n " + nEvents + " -e " + energy + " -p " + nuPDG[key] + flux + " -t " + targetPDG[key] + \
-          " -r " + key + " --seed " + mcseed + " --cross-sections input/gxspl-vA-" + tag + ".xml" + \
-          " --event-generator-list " + generatorList
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -s " + xsec_a_path + "/gxspl-vA-" + tag + ".xml -o " + out + \
-                 " -l gevgen_" + key + ".log -c " + cmd
+    cmd = "gevgen " + options + " -p " + nuPDG[key] + " -t " + targetPDG[key] + " -r " + key
+    logFile = "gevgen_" + key + ".log"
+    jobsub.addJob (xsec_a_path + "/" + inputFile, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
 
-def fillDAG_GST (dag, jobsub, out):
+def fillDAG_GST (jobsub, out):
   # check if job is done already
   if isDoneGST (out):
     msg.warning ("xsec validation gst files found in " + out + " ... " + msg.BOLD + "skipping xsecval:fillDAG_GST\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding xsec validation (gst) jobs\n")
-  # fill dag file with gntpc jobs in parallel mode
-  print >>dag, "<parallel>"
-  # loop over keys and generate proper command
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  # loop over keys and generate gntpc command
   for key in nuPDG.iterkeys():
-    cmd = "gntpc -f gst -i input/gntp." + key + ".ghep.root"
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -s " + out + "/gntp." + key + ".ghep.root -o " + out + " -l gntpc" + key + ".log -c " + cmd
+    inputFile = "gntp." + key + ".ghep.root"
+    logFile = "gntpc" + key + ".log"
+    cmd = "gntpc -f gst -i input/" + inputFile
+    jobsub.addJob (out + "/" + inputFile, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
 
-def fillDAG_data (tag, date, dag, jobsub, xsec_a_path, outEvents, outRep, outRepPs):
+def fillDAG_data (jobsub, tag, date, xsec_a_path, outEvents, outRep, outRepSng):
   # check if job is done already
-  if isDoneData (tag, date, outRep, outRepPs):
+  if isDoneData (tag, date, outRep, outRepSng):
     msg.warning ("xsec validation plots found in " + outRep + " ... " + msg.BOLD + "skipping xsecval:fillDAG_data\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding xsec validation (data) jobs\n")    
-  # single job to generate all GENIE/data comparisons
-  print >>dag, "<parallel>"
-  # one job for all without errors
-  cmd = "gvld_nu_xsec -g input/file_list-" + tag + "-" + date + ".xml " + \
-        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref"
-  cmd = re.sub (' ', "SPACE", cmd)  # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -x " + outRep + " -j " + xsec_a_path + " -k " + outEvents + " -o " + outRep + \
-               " -l gvld_nu_xsec_all.log -c " + cmd
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  # one job for all comparisons without errors
+  inFile  = "file_list-" + tag + "-" + date + ".xml"
+  outFile = "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-all-withref"
+  cmd = "gvld_nu_xsec -g input/" + inFile + " -o " + outFile
+  # add the command to dag
+  inputs = outRep + "/" + inFile + " " + xsec_a_path + "/xsec-vA-" + tag + ".root " + outEvents + "/*.ghep.root"
+  logFile = "gvld_nu_xsec_all.log"
+  jobsub.addJob (inputs, outRep, logFile, cmd)
   # job per comparison with error
   for comp in comparisons:
-    cmd = "gvld_nu_xsec -e -g input/file_list-" + tag + "-" + date + ".xml " + \
-        "-o genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp + " -c " + comp
-    cmd = re.sub (' ', "SPACE", cmd)  # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -x " + outRep + " -j " + xsec_a_path + " -k " + outEvents + " -o " + outRepPs + \
-                 " -l gvld_nu_xsec_" + comp + ".log -c " + cmd
-  print >>dag, "</parallel>"
+    outFile = "genie_" + tag + "-" + date + "-world_nu_xsec_data_comp-" + comp
+    cmd = "gvld_nu_xsec -e -g input/" + inFile + " -o " + outFile + " -c " + comp
+    logFile = "gvld_nu_xsec_" + comp + ".log"
+    jobsub.addJob (inputs, outRepSng, logFile, cmd)
+  # done
+  jobsub.add ("</parallel>")
   
 def isDoneGHEP (path):
   # check if given path contains all ghep files

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts p:o:i:j:k:x:y:s:l:c:d: OPT
+while getopts p:o:i:l:c:d: OPT
 do
   case ${OPT} in
     p) # path to genie top dir
@@ -9,24 +9,9 @@ do
     o) # output directory
       out=$OPTARG
       ;;
-    i) # input files dir
-      input1=$OPTARG
+    i) # input files (fileA fileB fileC...)
+      input=(`echo $OPTARG | sed 's/SPACE/ /g'`)
       ;;
-    j) # input files dir (only *.root)
-      input2=$OPTARG
-      ;;
-    k) # input files dir (only *.ghep.root)
-      input3=$OPTARG
-      ;;
-    x) # input files dir (only *.xml)
-      input4=$OPTARG
-      ;;
-    y) # input files dir (only *.ps)
-      input5=$OPTARG
-      ;;
-    s) # input single file
-      inputS=$OPTARG
-      ;;      
     l) # logfile name
       log=$OPTARG
       ;;
@@ -34,7 +19,7 @@ do
       debug=$OPTARG
       ;;
     c) # command to run
-      cmd=`echo $OPTARG | sed 's/SPACE/ /g' | sed "s/SQUOTE/'/g" | sed 's/SCOLON/;/g'` 
+      cmd=`echo $OPTARG | sed 's/SPACE/ /g' | sed "s/SQUOTE/'/g"` 
       ;;
   esac
 done
@@ -59,12 +44,10 @@ setup ifdhc
 
 mkdir input
 
-if [ -n "$input1" ]; then ifdh cp $input1/* input; fi
-if [ -n "$input2" ]; then ifdh cp $input2/*.root input; fi
-if [ -n "$input3" ]; then ifdh cp $input3/*.ghep.root input; fi
-if [ -n "$input4" ]; then ifdh cp $input4/*.xml input; fi
-if [ -n "$input5" ]; then ifdh cp $input5/*.ps input; fi
-if [ -n "$inputS" ]; then ifdh cp $inputS input; fi
+for file in "${input[@]}"
+do
+  ifdh cp $file input
+done
 
 ### run the command ###
 

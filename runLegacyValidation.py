@@ -2,8 +2,9 @@
 
 # GENIE Legacy Validation based on src/scripts/production/batch
 
+from jobsub import Jobsub
 import parser, jenkins, msg, nun, nua, standard, reptest, xsecval
-import os, datetime, subprocess
+import os, datetime
 
 def initMessage (args):
   print msg.BLUE
@@ -54,32 +55,29 @@ if __name__ == "__main__":
   initMessage (args)
   # get build
   msg.info ("Getting GENIE from jenkins...\n")
-  buildName = jenkins.getBuild (args.tag, args.build_date, args.builds)
+  args.buildName = jenkins.getBuild (args.tag, args.build_date, args.builds)
   # preapre folder structure for output
-  paths = preparePaths (args.output + "/" + args.tag + "/" + args.build_date)
+  args.paths = preparePaths (args.output + "/" + args.tag + "/" + args.build_date)
   # dag file
-  dagFile = paths['top'] + "/legacyValidation-" + args.tag + "-" + args.build_date + ".dag"
-  try: os.remove (dagFile)
-  except OSError: pass
-  dag = open (dagFile, 'w');
-  # common jobsub command
-  jobsub = "jobsub --OS=SL6 --resource-provides=usage_model=" + args.resource + " -G " + args.group + " file://" \
-           + args.run + " -p " + args.builds + "/" + buildName + " -d " + args.debug
+  #~ dagFile = paths['top'] + "/legacyValidation-" + args.tag + "-" + args.build_date + ".dag"
+  #~ try: os.remove (dagFile)
+  #~ except OSError: pass
+  #~ dag = open (dagFile, 'w');
+  #~ # common jobsub command
+  #~ jobsub = "jobsub --OS=SL6 --resource-provides=usage_model=" + args.resource + " -G " + args.group + " file://" \
+           #~ + args.run + " -p " + args.builds + "/" + buildName + " -d " + args.debug
+  jobsub = Jobsub (args)
   # fill dag files with jobs
-  msg.info ("Adding jobs to dag file: " + dagFile + "\n")
-  nun.fillDAG (args.tag, dag, jobsub, paths['xsec_N'])                  # nucleon cross sections
-  nua.fillDAG (args.tag, dag, jobsub, paths['xsec_N'], paths['xsec_A']) # nucleus cross sections
-  standard.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['mctest'], paths['sanity'])  # standard mctest sanity
-  reptest.fillDAG (args.tag, dag, jobsub, paths['xsec_A'], paths['reptest'], paths['replog'])  # repeatability test
-  xsecval.fillDAG (args.tag, args.build_date, dag, jobsub, args.builds + "/" + buildName, paths['xsec_A'], 
-                   paths['xsecval'], paths['xseclog'], paths['xsecsng']) # xsec validation
-  # dag file done
-  dag.close()
-  msg.info ("Done with dag file. Ready to submit.\n")
-  # run DAG
-  if os.stat(dagFile).st_size == 0:
-    msg.warning ("Dag file: " + dagFile + " is empty. " + msg.RED + msg.BOLD + "NO JOBS TO RUN!!!\n")
-    exit (0)
-  msg.info ("Submitting: " + dagFile + "\n")
-  subprocess.Popen ("source /cvmfs/fermilab.opensciencegrid.org/products/common/etc/setups.sh; setup jobsub_client; " +
-                    "jobsub_submit_dag -G " + args.group + " file://" + dagFile, shell=True, executable="/bin/bash")
+  msg.info ("Adding jobs to dag file: " + jobsub.dagFile + "\n")
+  # nucleon cross sections
+  #~ nun.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_N'])
+  # nucleus cross sections
+  #~ nua.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_N'], args.paths['xsec_A'])
+  # standard mctest sanity
+  #~ standard.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_A'], args.paths['mctest'], args.paths['sanity'])
+  # repeatability test
+  #~ reptest.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_A'], args.paths['reptest'], args.paths['replog'])
+  # xsec validation
+  xsecval.fillDAG (jobsub, args.tag, args.build_date, args.paths, args.builds + "/" + args.buildName)
+  # dag file done, submit jobs
+  jobsub.submit()

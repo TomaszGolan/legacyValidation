@@ -139,7 +139,7 @@ def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
           " -r " + key + " --seed " + mcseed + " --cross-sections input/gxspl-vA-" + tag + ".xml" + \
           " --event-generator-list " + generatorList[key]
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -x " + xsec_a_path + " -o " + out + " -l gevgen_" + key + ".log -c " + cmd
+    print >>dag, jobsub + " -i " + xsec_a_path + "/*.xml -o " + out + " -l gevgen_" + key + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
 
@@ -155,7 +155,7 @@ def fillDAG_GST (dag, jobsub, out):
   for key in nuPDG.iterkeys():
     cmd = "gntpc -f gst -i input/gntp." + key + ".ghep.root"
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -k " + out + " -o " + out + " -l gntpc" + key + ".log -c " + cmd
+    print >>dag, jobsub + " -i " + out + "/*.ghep.root -o " + out + " -l gntpc" + key + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
 
@@ -180,7 +180,7 @@ def fillDAG_sanity (dag, jobsub, mctest_path, out):
           "--check-vertex-distribution " + \
           "--check-decayer-consistency"
     cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -s " + mctest_path + "/gntp." + key + ".ghep.root -o " + out + \
+    print >>dag, jobsub + " -i " + mctest_path + "/gntp." + key + ".ghep.root -o " + out + \
                  " -l gvld_sample_scan." + key + ".log -c " + cmd
   # done
   print >>dag, "</parallel>"
