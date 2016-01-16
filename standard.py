@@ -120,70 +120,76 @@ generatorList = {
   '9203' : 'IMD',
   '9204' : 'IMD'}
 
-def fillDAG (tag, dag, jobsub, xsec_a_path, outEvent, outTest):
-  fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, outEvent)
-  fillDAG_GST (dag, jobsub, outEvent)
-  fillDAG_sanity (dag, jobsub, outEvent, outTest)
+def fillDAG (jobsub, tag, paths):
+  fillDAG_GHEP (jobsub, tag, paths['xsec_A'], paths['mctest'])
+  fillDAG_GST (jobsub, paths['mctest'])
+  fillDAG_sanity (jobsub, paths['mctest'], paths['sanity'])
   
-def fillDAG_GHEP (tag, dag, jobsub, xsec_a_path, out):
+def fillDAG_GHEP (jobsub, tag, xsec_a_path, out):
   # check if job is done already
   if isDoneGHEP (out):
     msg.warning ("Standard mctest ghep files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GHEP\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding standard mctest (ghep) jobs\n")
-  # fill dag file with gevgen jobs in parallel mode
-  print >>dag, "<parallel>"
-  # loop over keys and generate proper command
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  inputFile = "gxspl-vA-" + tag + ".xml"
+  options = " --seed " + mcseed + " --cross-sections input/" + inputFile
+  # loop over keys and generate gevgen command
   for key in nuPDG.iterkeys():
     cmd = "gevgen -n " + nEvents[key] + " -e " + energy[key] + " -p " + nuPDG[key] + " -t " + targetPDG[key] + \
-          " -r " + key + " --seed " + mcseed + " --cross-sections input/gxspl-vA-" + tag + ".xml" + \
-          " --event-generator-list " + generatorList[key]
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + xsec_a_path + "/*.xml -o " + out + " -l gevgen_" + key + ".log -c " + cmd
+          " -r " + key + " --event-generator-list " + generatorList[key] + options
+    logFile = "gevgen_" + key + ".log"
+    jobsub.addJob (xsec_a_path + "/" + inputFile, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
 
-def fillDAG_GST (dag, jobsub, out):
+def fillDAG_GST (jobsub, out):
   # check if job is done already
   if isDoneGST (out):
     msg.warning ("Standard mctest gst files found in " + out + " ... " + msg.BOLD + "skipping standard:fillDAG_GST\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding standard mctest (gst) jobs\n")
-  # fill dag file with gntpc jobs in parallel mode
-  print >>dag, "<parallel>"
+  # in parallel mode
+  jobsub.add ("<parallel>")
   # loop over keys and generate proper command
   for key in nuPDG.iterkeys():
-    cmd = "gntpc -f gst -i input/gntp." + key + ".ghep.root"
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + out + "/*.ghep.root -o " + out + " -l gntpc" + key + ".log -c " + cmd
+    inputFile = "gntp." + key + ".ghep.root"
+    cmd = "gntpc -f gst -i input/" + inputFile
+    logFile = "gntpc" + key + ".log"
+    jobsub.addJob (out + "/" + inputFile, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
 
-def fillDAG_sanity (dag, jobsub, mctest_path, out):
+def fillDAG_sanity (jobsub, events, out):
   # check if job is done already
   if isDoneSanity (out):
     msg.warning ("Standard mctest sanity checks log files found in " + out + " ... " + msg.BOLD + \
                  "skipping standard:fillDAG_sanity\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding mctest sanity checks jobs\n")
-  # fill dag file with sanity check jobs in parallel mode
-  print >>dag, "<parallel>"
-  # loop over keys and generate proper command
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  options = " --add-event-printout-in-error-log --event-record-print-level 2 --max-num-of-errors-shown 10 " + \
+            " --check-energy-momentum-conservation " + \
+            " --check-charge-conservation " + \
+            " --check-for-pseudoparticles-in-final-state " + \
+            " --check-for-off-mass-shell-particles-in-final-state " + \
+            " --check-for-num-of-final-state-nucleons-inconsistent-with-target " + \
+            " --check-vertex-distribution " + \
+            " --check-decayer-consistency"
+  # loop over keys and generate gvld_sample_scan command
   for key in nuPDG.iterkeys():
-    cmd = "gvld_sample_scan -f input/gntp." + key + ".ghep.root -o gntp." + key + ".ghep.root.sanity.log " + \
-          "--add-event-printout-in-error-log --event-record-print-level 2 --max-num-of-errors-shown 10 " + \
-          "--check-energy-momentum-conservation " + \
-          "--check-charge-conservation " + \
-          "--check-for-pseudoparticles-in-final-state " + \
-          "--check-for-off-mass-shell-particles-in-final-state " + \
-          "--check-for-num-of-final-state-nucleons-inconsistent-with-target " + \
-          "--check-vertex-distribution " + \
-          "--check-decayer-consistency"
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + mctest_path + "/gntp." + key + ".ghep.root -o " + out + \
-                 " -l gvld_sample_scan." + key + ".log -c " + cmd
+    inputFile = "gntp." + key + ".ghep.root"
+    output = "gntp." + key + ".ghep.root.sanity.log"
+    cmd = "gvld_sample_scan -f input/" + inputFile + " -o " + output + options
+    logFile = "gvld_sample_scan." + key + ".log"
+    jobsub.addJob (events + "/" + inputFile, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
 
 def isDoneGHEP (path):
   # check if given path contains all ghep files

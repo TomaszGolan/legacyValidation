@@ -67,7 +67,7 @@ if __name__ == "__main__":
   # nucleus cross sections
   #~ nua.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_N'], args.paths['xsec_A'])
   # standard mctest sanity
-  #~ standard.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_A'], args.paths['mctest'], args.paths['sanity'])
+  standard.fillDAG (jobsub, args.tag, args.paths)
   # repeatability test
   reptest.fillDAG (jobsub, args.tag, args.paths)
   # xsec validation
