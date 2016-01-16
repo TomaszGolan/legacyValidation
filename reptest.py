@@ -5,48 +5,50 @@ import re, os
 
 runs = ['100', '101', '102']
 
-def fillDAG (tag, dag, jobsub, xsec_a_path, outEv, outTest):
-  fillDAGEv (tag, dag, jobsub, xsec_a_path, outEv)
-  fillDAGTest (dag, jobsub, outEv, outTest)
+def fillDAG (jobsub, tag, paths):
+  fillDAGEv (jobsub, tag, paths['xsec_A'], paths['reptest'])
+  fillDAGTest (jobsub, paths['reptest'], paths['replog'])
 
-def fillDAGEv (tag, dag, jobsub, xsec_a_path, out):
+def fillDAGEv (jobsub, tag, xsec_a_path, out):
   # check if job is done already
   if isDoneEv (out):
     msg.warning ("Repeatability test events found in " + out + " ... " + msg.BOLD + "skipping reptest:fillDAGEv\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding repeatability test (gevgen) jobs\n")
-  # fill dag file with the same jobs with different run number in parallel mode
-  print >>dag, "<parallel>"
-  # loop over runs and generate proper command
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  # loop over runs and generate gevgen command
+  inputFile = "gxspl-vA-" + tag + ".xml"
+  options = " -p 14 -t 1000260560 -e 0.1,50 -f '1/x' --seed 123456 --cross-sections input/" + inputFile
   for run in runs:
-    cmd = "gevgen -p 14 -t 1000260560 -e 0.1,50 -f '1/x' --seed 123456 -r " + run + \
-          " --cross-sections input/gxspl-vA-" + tag + ".xml"
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    cmd = re.sub ("\'", "SQUOTE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + xsec_a_path + "/gxspl-vA-" + tag + ".xml -o " + out + \
-                 " -l gevgen_" + run + ".log -c " + cmd
+    cmd = "gevgen " + options + " -r " + run
+    logFile = "gevgen_" + run + ".log"
+    jobsub.addJob (xsec_a_path + "/" + inputFile, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
   
-def fillDAGTest (dag, jobsub, events, out):
+def fillDAGTest (jobsub, events, out):
   # check if job is done already
   if isDoneTest (out):
     msg.warning ("Repeatability test logs found in " + out + " ... " + msg.BOLD + "skipping reptest:fillDAGTest\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding repeatability test (gvld) jobs\n")
-  # fill dag file with repeatability test jobs in parallel mode
-  print >>dag, "<parallel>"
+  # in parallel mode
+  jobsub.add ("<parallel>")
   # loop over runs and generate proper command
+  options = " --add-event-printout-in-error-log --max-num-of-errors-shown 10 "
+  input1 = "gntp." + runs[0] + ".ghep.root" 
   for run in runs[1:]:
-    cmd = "gvld_repeatability_test --first-sample input/gntp." + runs[0] + ".ghep.root " + \
-          " --second-sample input/gntp." + run + ".ghep.root " + \
-          " --add-event-printout-in-error-log --max-num-of-errors-shown 10 " + \
-          " -o reptest_runs" + runs[0] + "vs" + run + ".log"
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + events + "/*.ghep.root -o " + out + \
-                          " -l gvld_repeatability_test_" + runs[0] + "vs" + run + ".log -c " + cmd
+    input2 = "gntp." + run + ".ghep.root"
+    output = "reptest_runs" + runs[0] + "vs" + run + ".log"
+    logFile = "gvld_repeatability_test_" + runs[0] + "vs" + run + ".log"
+    cmd = "gvld_repeatability_test --first-sample input/" + input1 + \
+          " --second-sample input/" + input2 + options + " -o " + output
+    jobsub.addJob (events + "/*.ghep.root", out, logFile, cmd)
   # done  
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
 
 def isDoneEv (path):
   # check if given path contains all root files

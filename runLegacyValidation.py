@@ -58,14 +58,7 @@ if __name__ == "__main__":
   args.buildName = jenkins.getBuild (args.tag, args.build_date, args.builds)
   # preapre folder structure for output
   args.paths = preparePaths (args.output + "/" + args.tag + "/" + args.build_date)
-  # dag file
-  #~ dagFile = paths['top'] + "/legacyValidation-" + args.tag + "-" + args.build_date + ".dag"
-  #~ try: os.remove (dagFile)
-  #~ except OSError: pass
-  #~ dag = open (dagFile, 'w');
-  #~ # common jobsub command
-  #~ jobsub = "jobsub --OS=SL6 --resource-provides=usage_model=" + args.resource + " -G " + args.group + " file://" \
-           #~ + args.run + " -p " + args.builds + "/" + buildName + " -d " + args.debug
+  # initialize jobsub
   jobsub = Jobsub (args)
   # fill dag files with jobs
   msg.info ("Adding jobs to dag file: " + jobsub.dagFile + "\n")
@@ -76,7 +69,7 @@ if __name__ == "__main__":
   # standard mctest sanity
   #~ standard.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_A'], args.paths['mctest'], args.paths['sanity'])
   # repeatability test
-  #~ reptest.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_A'], args.paths['reptest'], args.paths['replog'])
+  reptest.fillDAG (jobsub, args.tag, args.paths)
   # xsec validation
   xsecval.fillDAG (jobsub, args.tag, args.build_date, args.paths, args.builds + "/" + args.buildName)
   # dag file done, submit jobs
