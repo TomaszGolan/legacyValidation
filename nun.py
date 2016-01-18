@@ -122,46 +122,54 @@ outXML = {'chm'           : 'pgxspl-chm.xml',
           'res_tau_cc'    : 'pgxspl-res_tau_cc.xml',
           'res_tau_nc'    : 'pgxspl-res_tau_nc.xml'}
 
-def fillDAG (tag, dag, jobsub, out):
-  fillDAGPart (tag, dag, jobsub, out)
-  fillDAGMerge (tag, dag, jobsub, out)
+def fillDAG (jobsub, tag, paths):
+  fillDAGPart (jobsub, tag, paths['xsec_N'])
+  fillDAGMerge (jobsub, tag, paths['xsec_N'])
 
-def fillDAGPart (tag, dag, jobsub, out):
+def fillDAGPart (jobsub, tag, out):
   # check if job is done already
   if isDonePart (out):
     msg.warning ("Nucleons splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGPart\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding nucleon splines (part) jobs\n")
-  # fill dag file with xsec-nucleon jobs in parallel mode
-  print >>dag, "<parallel>"
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  # common options
+  inputs = ""
   # loop over keys and generate proper command
   for key in nuPDG.iterkeys():
     cmd = "gmkspl -p " + nuPDG[key] + " -t " + targetPDG[key] + " -n " + nKnots + " -e " + maxEnergy \
           + " -o " + outXML[key] + " --event-generator-list " + generatorList[key]
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -o " + out + " -l " + outXML[key] + ".log -c " + cmd
+    logFile = "gmkspl." + outXML[key] + ".log"
+    jobsub.addJob (inputs, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
   
-def fillDAGMerge (tag, dag, jobsub, out): 
+def fillDAGMerge (jobsub, tag, out): 
   # check if job is done already
   if isDoneMerge (tag, out):
     msg.warning ("Nucleons merged splines found in " + out + " ... " + msg.BOLD + "skipping nun:fillDAGMerge\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding nucleon splines (merge) jobs\n")
-  # fill dag file with splines add and 2root jobs in serial mode
-  print >>dag, "<serial>"
+  # in serial mode
+  jobsub.add ("<serial>")
+  # common options
+  xmlFile = "gxspl-vN-" + tag + ".xml"  
   # merge splines job
-  cmd = "gspladd -d input -o gxspl-vN-" + tag + ".xml"  
-  cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + "/*.xml -o " + out + " -l gspladd.log -c " + cmd
+  cmd = "gspladd -d input -o " + xmlFile
+  inputs = out + "/*.xml"
+  logFile = "gspladd.log"
+  jobsub.addJob (inputs, out, logFile, cmd)
   # convert to root job
-  cmd = "gspl2root -p 12,-12,14,-14,16,-16 -t 1000010010,1000000010 -o xsec-vN-" + tag + ".root " + \
-        "-f input/gxspl-vN-" + tag + ".xml"
-  cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + "/gxspl-vN-" + tag + ".xml -o " + out + " -l gspladd.log -c " + cmd
+  rootFile = "xsec-vN-" + tag + ".root"
+  cmd = "gspl2root -p 12,-12,14,-14,16,-16 -t 1000010010,1000000010 -o " + rootFile + " -f input/" + xmlFile
+  inputs = out + "/" + xmlFile
+  logFile = "gspladd.log"
+  jobsub.addJob (inputs, out, logFile, cmd)
   # done
-  print >>dag, "</serial>"
+  jobsub.add ("</serial>")
 
 def isDonePart (path):
   # check if given path contains all splines

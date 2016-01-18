@@ -20,46 +20,57 @@ targets = ['1000010010',  # H1
            '1000260560'   # Fe56
           ];
           
-def fillDAG (tag, dag, jobsub, xsec_n_path, out):
-  fillDAGPart (tag, dag, jobsub, xsec_n_path, out)
-  fillDAGMerge (tag, dag, jobsub, out)
+def fillDAG (jobsub, tag, paths):
+  fillDAGPart (jobsub, tag, paths['xsec_N'], paths['xsec_A'])
+  fillDAGMerge (jobsub, tag, paths['xsec_A'])
   
-def fillDAGPart (tag, dag, jobsub, xsec_n_path, out):
+def fillDAGPart (jobsub, tag, xsec_n_path, out):
   # check if job is done already
   if isDonePart (tag, out):
     msg.warning ("Nucleus splines found in " + out + " ... " + msg.BOLD + "skipping nua:fillDAGPart\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding nucleus splines (part) jobs\n")
-  # fill dag file with xsec-nucleus jobs in parallel mode
-  print >>dag, "<parallel>"
+  # in parallel mode
+  jobsub.add ("<parallel>")
+  # common options
+  inputFile = "gxspl-vN-" + tag + ".xml"
+  inputs = xsec_n_path + "/*.xml"
+  options = " --input-cross-sections input/" + inputFile
   # loop over targets and generate proper command
   for t in targets:
-    cmd = "gmkspl -p " + nuPDG + " -t " + t + " -n " + nKnots + " -e " + maxEnergy + \
-          " --input-cross-sections input/gxspl-vN-" + tag + ".xml --output-cross-sections gxspl_" + t + ".xml"
-    cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-    print >>dag, jobsub + " -i " + xsec_n_path + "/*.xml -o " + out + " -l gxspl_" + t + ".xml.log -c " + cmd
+    outputFile = "gxspl_" + t + ".xml"
+    cmd = "gmkspl -p " + nuPDG + " -t " + t + " -n " + nKnots + " -e " + maxEnergy + options + \
+          " --output-cross-sections " + outputFile
+    logFile = "gxspl_" + t + ".xml.log"
+    jobsub.addJob (inputs, out, logFile, cmd)
   # done
-  print >>dag, "</parallel>"
+  jobsub.add ("</parallel>")
   
-def fillDAGMerge (tag, dag, jobsub, out):
+def fillDAGMerge (jobsub, tag, out):
   # check if job is done already
   if isDoneMerge (tag, out):
     msg.warning ("Nucleus merged splines found in " + out + " ... " + msg.BOLD + "skipping nua:fillDAGMerge\n", 1)
     return
+  # not done, add jobs to dag
   msg.info ("\tAdding nucleus splines (merge) jobs\n")
-  # fill dag file with splines add and 2root jobs in serial mode
-  print >>dag, "<serial>"
+  # in serial mode
+  jobsub.add ("<serial>")
+  # common options
+  xmlFile = "gxspl-vA-" + tag + ".xml"
   # merge splines job
-  cmd = "gspladd -d input -o gxspl-vA-" + tag + ".xml"  
-  cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + "/*.xml -o " + out + " -l gspladd.log -c " + cmd
+  cmd = "gspladd -d input -o " + xmlFile
+  inputs = out + "/*.xml"
+  logFile = "gspladd.log"
+  jobsub.addJob (inputs, out, logFile, cmd)
   # convert to root job
-  cmd = "gspl2root -p " + nuPDG + " -t " + ",".join(targets) + " -o xsec-vA-" + tag + ".root " + \
-        "-f input/gxspl-vA-" + tag + ".xml"
-  cmd = re.sub (' ', "SPACE", cmd) # temporary solution as workaround for jobsub quotes issue
-  print >>dag, jobsub + " -i " + out + "/gxspl-vA-" + tag + ".xml -o " + out + " -l gspladd.log -c " + cmd
+  rootFile = "xsec-vA-" + tag + ".root"
+  cmd = "gspl2root -p " + nuPDG + " -t " + ",".join(targets) + " -o " + rootFile + " -f input/" + xmlFile
+  inputs = out + "/" + xmlFile
+  logFile = "gspl2root.log"
+  jobsub.addJob (inputs, out, logFile, cmd)
   # done
-  print >>dag, "</serial>"
+  jobsub.add ("</serial>")
 
 def isDonePart (tag, path):
   # check if given path contains all splines

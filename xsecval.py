@@ -21,7 +21,7 @@ mcseed = "210921029"
 nEvents = "100000"
 energy = "0.1,120.0"  
 generatorList = "Default"
-flux = "'1/x'"
+flux = "1/x"
 
 comparisons = ["numuCC_all", "numubarCC_all", "numuCC_lowE", "numubarCC_lowE", "numuCC_highE", "numubarCC_highE", 
                "numuCC_minos", "numubarCC_minos", "numuCC_sciboone", "r_minos", "numuCCQE_all", "numuCCQE_deuterium", 

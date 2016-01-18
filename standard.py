@@ -134,6 +134,7 @@ def fillDAG_GHEP (jobsub, tag, xsec_a_path, out):
   msg.info ("\tAdding standard mctest (ghep) jobs\n")
   # in parallel mode
   jobsub.add ("<parallel>")
+  # common options
   inputFile = "gxspl-vA-" + tag + ".xml"
   options = " --seed " + mcseed + " --cross-sections input/" + inputFile
   # loop over keys and generate gevgen command
@@ -173,6 +174,7 @@ def fillDAG_sanity (jobsub, events, out):
   msg.info ("\tAdding mctest sanity checks jobs\n")
   # in parallel mode
   jobsub.add ("<parallel>")
+  # common options
   options = " --add-event-printout-in-error-log --event-record-print-level 2 --max-num-of-errors-shown 10 " + \
             " --check-energy-momentum-conservation " + \
             " --check-charge-conservation " + \

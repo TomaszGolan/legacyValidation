@@ -18,9 +18,10 @@ def fillDAGEv (jobsub, tag, xsec_a_path, out):
   msg.info ("\tAdding repeatability test (gevgen) jobs\n")
   # in parallel mode
   jobsub.add ("<parallel>")
-  # loop over runs and generate gevgen command
+  # common options
   inputFile = "gxspl-vA-" + tag + ".xml"
-  options = " -p 14 -t 1000260560 -e 0.1,50 -f '1/x' --seed 123456 --cross-sections input/" + inputFile
+  options = " -p 14 -t 1000260560 -e 0.1,50 -f 1/x --seed 123456 --cross-sections input/" + inputFile
+  # loop over runs and generate gevgen command
   for run in runs:
     cmd = "gevgen " + options + " -r " + run
     logFile = "gevgen_" + run + ".log"
@@ -37,9 +38,10 @@ def fillDAGTest (jobsub, events, out):
   msg.info ("\tAdding repeatability test (gvld) jobs\n")
   # in parallel mode
   jobsub.add ("<parallel>")
-  # loop over runs and generate proper command
+  # common options
   options = " --add-event-printout-in-error-log --max-num-of-errors-shown 10 "
   input1 = "gntp." + runs[0] + ".ghep.root" 
+  # loop over runs and generate proper command
   for run in runs[1:]:
     input2 = "gntp." + run + ".ghep.root"
     output = "reptest_runs" + runs[0] + "vs" + run + ".log"

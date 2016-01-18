@@ -63,9 +63,9 @@ if __name__ == "__main__":
   # fill dag files with jobs
   msg.info ("Adding jobs to dag file: " + jobsub.dagFile + "\n")
   # nucleon cross sections
-  #~ nun.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_N'])
+  nun.fillDAG (jobsub, args.tag, args.paths)
   # nucleus cross sections
-  #~ nua.fillDAG (args.tag, jobsub.dag, jobsub.cmd, args.paths['xsec_N'], args.paths['xsec_A'])
+  nua.fillDAG (jobsub, args.tag, args.paths)
   # standard mctest sanity
   standard.fillDAG (jobsub, args.tag, args.paths)
   # repeatability test

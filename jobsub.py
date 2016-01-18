@@ -33,7 +33,6 @@ class Jobsub:
   # print given command with given options to dag file (input files to copy, path for output, logfilename, command)
   def addJob (self, inputs, output, logfile, cmd):
     cmd = re.sub (' ', "SPACE", cmd)   # temporary solution as workaround for jobsub quotes issue
-    cmd = re.sub ("\'", "SQUOTE", cmd) # temporary solution as workaround for jobsub quotes issue
     inputs = re.sub (' ', "SPACE", inputs) # temporary solution as workaround for jobsub quotes issue
     # write full jobsub command to dag file
     print >>self.dag, self.basecmd + \
