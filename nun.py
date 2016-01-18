@@ -136,7 +136,7 @@ def fillDAGPart (jobsub, tag, out):
   # in parallel mode
   jobsub.add ("<parallel>")
   # common options
-  inputs = ""
+  inputs = "none"
   # loop over keys and generate proper command
   for key in nuPDG.iterkeys():
     cmd = "gmkspl -p " + nuPDG[key] + " -t " + targetPDG[key] + " -n " + nKnots + " -e " + maxEnergy \
