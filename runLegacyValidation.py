@@ -3,7 +3,7 @@
 # GENIE Legacy Validation based on src/scripts/production/batch
 
 from jobsub import Jobsub
-import parser, jenkins, msg, nun, nua, standard, reptest, xsecval
+import parser, jenkins, msg, nun, nua, standard, reptest, xsecval, hadronization
 import os, datetime
 
 def initMessage (args):
@@ -34,12 +34,14 @@ def preparePaths (path):
   paths['mctest']  = path + "/events/mctest"
   paths['reptest'] = path + "/events/repeatability"
   paths['xsecval'] = path + "/events/xsec_validation"
+  paths['hadron']  = path + "/events/hadronization"
   # reports
-  paths['reports']  = path + "/reports"
-  paths['sanity']   = path + "/reports/sanity_mctest"
-  paths['replog']   = path + "/reports/repeatability_test"
-  paths['xseclog']  = path + "/reports/xsec_validation"
-  paths['xsecsng']  = path + "/reports/xsec_validation/single_comparisons_with_errors"
+  paths['reports'] = path + "/reports"
+  paths['sanity']  = path + "/reports/sanity_mctest"
+  paths['replog']  = path + "/reports/repeatability_test"
+  paths['xseclog'] = path + "/reports/xsec_validation"
+  paths['xsecsng'] = path + "/reports/xsec_validation/single_comparisons_with_errors"
+  paths['hadrep']  = path + "/reports/hadronization_test"
   # create all directiories
   for p in paths.values():
     if not os.path.exists (p): os.makedirs (p)
@@ -71,6 +73,8 @@ if __name__ == "__main__":
   # repeatability test
   reptest.fillDAG (jobsub, args.tag, args.paths)
   # xsec validation
-  xsecval.fillDAG (jobsub, args.tag, args.build_date, args.paths, args.builds + "/" + args.buildName)
+  xsecval.fillDAG (jobsub, args.tag, args.build_date, args.paths)
+  # hadronization test
+  hadronization.fillDAG (jobsub, args.tag, args.build_date, args.paths)
   # dag file done, submit jobs
   jobsub.submit()

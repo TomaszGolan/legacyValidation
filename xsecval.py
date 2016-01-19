@@ -1,4 +1,4 @@
-# fill dag with neutrino xsec validation jobs
+# fill dag with neutrino xsec validation (comparisons with data) jobs
 
 import msg
 import os
@@ -35,7 +35,7 @@ comparisons = ["numuCC_all", "numubarCC_all", "numuCC_lowE", "numubarCC_lowE", "
                "numuCC_dilepton_nomad", "numuCC_dilepton_e744_e770", "numuCC_dilepton_e744", "numuCC_dilepton_fnal15ft",
                "numuCC_dilepton_gargamelle"]
 
-def fillDAG (jobsub, tag, date, paths, genie_path):
+def fillDAG (jobsub, tag, date, paths):
   fillDAG_GHEP (jobsub, tag, paths['xsec_A'], paths['xsecval'])
   fillDAG_GST (jobsub, paths['xsecval'])
   createFileList (tag, date, paths['xsec_A'], paths['xsecval'], paths['xseclog'])

@@ -1,4 +1,4 @@
-# fill dag with standard neutrino event generation jobs 
+# fill dag with standard neutrino event generation and sanity check jobs 
 
 import msg
 import re, os
