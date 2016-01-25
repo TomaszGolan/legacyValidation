@@ -60,7 +60,7 @@ then
   echo "Running command" >> $log
   $cmd >> $log
 else
-  $cmd #1>/dev/null 2>$log
+  $cmd 1>/dev/null 2>$log
 fi
 
 ### copy results to scratch

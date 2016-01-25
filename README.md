@@ -46,4 +46,19 @@ It handles all common steps of running GENIE on grid:
 * set up GENIE dependencies
 * run given command
 * copy output files to **PATH FOR OUTPUT** (somewhere in /pnfs)
+* in debug mode the whole output is copied to the log file (otherwise only errors)
+
+In the first step, proper GENIE version (given by **GENIE VERSION TAG**) is downloaded from buildmaster to **PATH TO BUILDS** (unless given build already exists), using **jenkins.py**. If user does not provide the date of build the most recent is used. 
+
+**jobsub.py** is initialized according to user options. It handles a dag file and provides an easy way to add new jobs. Because of quotes issue in jobsub client (it eats all quotes), all spaces in the command are replaced by SPACE. **runGENIE.sh** replace SPACE back to ' '.
+
+The rest of modules are dedicated for different validation tests. Each one has similar structure - fill dag file with proper GENIE command using **jobsub.py** (unless results already exist - then skip the step).
+
+* nun.py - neutrino-nucleon cross section splines
+* nua.py - neutrino-nucleus cross section splines
+* standard.py - basic sanity checks (conservation laws etc)
+* reptest.py - repeatability test
+* xsecval.py - compare GENIE predictions with data
+* hadronization.py - hadronization test (comparing with data)
+
 
