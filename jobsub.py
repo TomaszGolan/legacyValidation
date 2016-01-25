@@ -5,7 +5,8 @@ class Jobsub:
   # handle jobsub command for runGENIE.sh in dag file  
   def __init__ (self, args):
     # init a proper jobsub command for dag
-    self.basecmd = "jobsub --OS=%s --resource-provides=usage_model=%s -G %s file://%s -p %s -d %s" % \
+    # -n option is mandatory for jobsub (otherwise jobs will be run twice...)
+    self.basecmd = "jobsub -n --OS=%s --resource-provides=usage_model=%s -G %s file://%s -p %s -d %s" % \
                    (args.os, args.resource, args.group, args.run, args.builds + "/" + args.buildName, args.debug)
     # create dag file
     self.dagFile = args.paths['top'] + "/legacyValidation-" + args.tag + "-" + args.build_date + ".dag"
