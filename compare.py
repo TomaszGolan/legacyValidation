@@ -48,5 +48,5 @@ if __name__ == "__main__":
   for i in range(len(args.tags)):
     xsec_output += args.tags[i] + "_" + args.dates[i]
     if i + 1 != len(args.tags): xsec_output += "_vs_"
-  command = "bash " + args.run + " -c gvld_nu_xsec -p " + args.path + " -f " + xsec_list + " -o " + args.out + "/" + xsec_output
+  command = "bash " + args.run + " -c gvld_nu_xsec -p " + args.path + " -f " + xsec_list + " -o " + xsec_output
   subprocess.Popen (command, shell=True, executable="/bin/bash")
