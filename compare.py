@@ -44,5 +44,9 @@ if __name__ == "__main__":
   if not os.path.exists (args.out): os.makedirs (args.out)
   # create filelist for xsec comparisons
   xsec_list = xsec_comp.createFileList(args)
-  command = "bash " + args.run + " -c gvld_nu_xsec -p " + args.path + " -f " + xsec_list + " -o " + args.out
+  xsec_output = args.out + "/xsec_comp-"
+  for i in range(len(args.tags)):
+    xsec_output += args.tags[i] + "_" + args.dates[i]
+    if i + 1 != len(args.tags): xsec_output += "_vs_"
+  command = "bash " + args.run + " -c gvld_nu_xsec -p " + args.path + " -f " + xsec_list + " -o " + args.out + "/" + xsec_output
   subprocess.Popen (command, shell=True, executable="/bin/bash")
