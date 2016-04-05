@@ -52,7 +52,7 @@ if __name__ == "__main__":
   subprocess.Popen (command, shell=True, executable="/bin/bash")
   # create hadronization comparisons
   had_list = had_comp.createFileList(args)
-  had_output = args.out + "/xsec_comp-"
+  had_output = args.out + "/had_comp-"
   for i in range(len(args.tags)):
     had_output += args.tags[i] + "_" + args.dates[i]
     if i + 1 != len(args.tags): had_output += "_vs_"
