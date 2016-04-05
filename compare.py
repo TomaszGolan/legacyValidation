@@ -9,7 +9,7 @@ def check (args):
   args.tags = args.tags.split()
   args.dates = args.dates.split()
   args.path = args.builds + "/genie_" + args.tags[0] + "_buildmaster_" + args.dates[0]
-  args.out = args.topdir + "/comparisons/"
+  args.out = "./comparisons/"
 
   if len(args.tags) != len(args.dates):
     print msg.RED
