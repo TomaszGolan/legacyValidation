@@ -56,5 +56,5 @@ if __name__ == "__main__":
   for i in range(len(args.tags)):
     had_output += args.tags[i] + "_" + args.dates[i]
     if i + 1 != len(args.tags): had_output += "_vs_"
-  command = "bash " + args.run + " -c gvld_hadronz_test -p " + args.path + " -f " + xsec_list + " -o " + had_output
+  command = "bash " + args.run + " -c gvld_hadronz_test -p " + args.path + " -f " + had_list + " -o " + had_output
   subprocess.Popen (command, shell=True, executable="/bin/bash")
