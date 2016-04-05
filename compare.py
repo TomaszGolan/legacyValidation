@@ -2,7 +2,7 @@
 
 # GENIE Legacy Validation Comparisons based on src/scripts/production/batch
 
-import parser_comp, msg, xsec_comp
+import parser_comp, msg, xsec_comp, had_comp
 import os, sys, datetime, subprocess
 
 def check (args):
@@ -49,4 +49,12 @@ if __name__ == "__main__":
     xsec_output += args.tags[i] + "_" + args.dates[i]
     if i + 1 != len(args.tags): xsec_output += "_vs_"
   command = "bash " + args.run + " -c gvld_nu_xsec -p " + args.path + " -f " + xsec_list + " -o " + xsec_output
+  subprocess.Popen (command, shell=True, executable="/bin/bash")
+  # create hadronization comparisons
+  had_list = had_comp.createFileList(args)
+  had_output = args.out + "/xsec_comp-"
+  for i in range(len(args.tags)):
+    had_output += args.tags[i] + "_" + args.dates[i]
+    if i + 1 != len(args.tags): had_output += "_vs_"
+  command = "bash " + args.run + " -c gvld_hadronz_test -p " + args.path + " -f " + xsec_list + " -o " + had_output
   subprocess.Popen (command, shell=True, executable="/bin/bash")
